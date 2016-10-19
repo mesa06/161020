@@ -1,0 +1,15 @@
+create database SoccerDB;
+
+use SoccerDB;
+
+create table Game 
+(
+  GameDate varchar(10),
+  AwayTeam varchar(50),
+  HomeTeam varchar(50),
+  AwayFT int,
+  HomeFT int,
+  AwayOdds decimal(5, 2),
+  DrawOdds decimal(5, 2),
+  HomeOdds decimal(5, 2)
+);

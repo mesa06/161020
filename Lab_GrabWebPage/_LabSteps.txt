@@ -1,0 +1,146 @@
+﻿《前言》
+
+http://www.betexplorer.com/soccer/england/premier-league-2014-2015/results/
+
+有一位很關心足球賽事的球迷，發現上述的網址可查到
+英超的比賽結果，然而，以手動的方式抄錄每一場比賽
+的資料，不僅耗時，而且容易出錯。
+
+正好，這位球迷也懂一點程式設計與資料庫，於是，他
+開始著手寫作程式將網站的資料轉錄到資料庫。假設你
+是那位球迷，將怎麼寫這支程式?
+
+（防雷頁）
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+分解問題 --
+1. 如何下載網頁?
+2. 如何取出網頁內容我們想要的特定字串?
+3. 如何將資料新增到資料庫?
+
+
+
+1. 如何下載網頁?
+
+<?php
+function GetPageContent($url) {
+	$result = "";
+	$file = fopen ( $url, "rb" );
+	if (! $file)
+		return $result;
+	while ( ! feof ( $file ) ) {
+		$result .= fread ( $file, 1024 * 8 );
+	}
+	fclose ( $file );
+	return $result;
+}
+
+$sPage = GetPageContent ( "http://www.betexplorer.com/soccer/england/premier-league-2014-2015/results/" );
+echo $sPage;
+
+?>
+
+
+
+
+2. 如何取出網頁內容我們想要的特定字串?
+2.1 取出 <table>...</table> 賽事資料
+2.2 將 2.1 的資料交給 XMLDocument 協助處理
+
+
+<?php
+function StrFind($sSource, $sBeginWith, $sEndWith, $iTh = 1, $bIncludeBeginEnd = TRUE) {
+    $result = "";
+    $iStartPosition = - 1;
+    for($i = 1; $i <= $iTh; $i ++) {
+        $iStartPosition = strpos ( $sSource, $sBeginWith, $iStartPosition + 1 );
+    }
+    if ($iStartPosition < 0)
+        return $result;
+    $iEndPosition = strpos ( $sSource, $sEndWith, $iStartPosition );
+    if ($iEndPosition < 0)
+        return $result;
+
+    $debugstr = '';
+    $testNested = $sBeginWith . substr ($sSource, $iStartPosition + strlen ( $sBeginWith ), $iEndPosition - $iStartPosition - strlen ( $sBeginWith ) ) . $sEndWith;
+    while (substr_count($testNested, $sBeginWith) != substr_count($testNested, $sEndWith)) {
+        $iEndPosition = strpos ( $sSource, $sEndWith, $iEndPosition + 1 );
+        if ($iEndPosition < 0)
+            return "Nested Error!";
+        $testNested = $sBeginWith . substr ($sSource, $iStartPosition + strlen ( $sBeginWith ), $iEndPosition - $iStartPosition - strlen ( $sBeginWith ) ) . $sEndWith;
+    }
+    
+    if ($bIncludeBeginEnd) {
+        $result = $sBeginWith . substr ($sSource, $iStartPosition + strlen ( $sBeginWith ), $iEndPosition - $iStartPosition - strlen ( $sBeginWith ) ) . $sEndWith;
+    } 
+    else
+        $result = substr ( $sSource, $iStartPosition + strlen ( $sBeginWith ), $iEndPosition - $iStartPosition - strlen ( $sBeginWith ) );
+    return $result;
+}
+
+$sTest = "...<table>table1</table>...<table>table2</table>...<table>ooo<table>table3</table>ooo</table>...";
+echo StrFind ( $sTest, "<table>", "</table>", 1, TRUE );
+echo "<hr>";
+echo StrFind ( $sTest, "<table>", "</table>", 2, FALSE );
+echo "<hr>";
+echo StrFind ( $sTest, "<table>", "</table>", 3, TRUE );
+
+?>
+
+
+3. 記得執行 SetupDB.txt 備妥資料庫結構
+
+
+<Note>
+關於「如何下載網頁」比較完整的解決方案，請參照 Lab_cURL 的作法。
+
+<Note>
+關於「如何解析網頁」，請參照 Lab_XPath 的作法。
+
